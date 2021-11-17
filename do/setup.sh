@@ -104,4 +104,47 @@ screen -S argocd-cluster -X quit
 chkfail $?
 
 echo ""
+echo "Starting Certificate 'stuff'"
+echo " - Cloudflare API Token Secret"
+cat <<EOT >k apply -f -
+apiVersion: external-secrets.io/v1alpha1
+kind: ExternalSecret
+metadata:
+  name: cloudflare-apit-token
+spec:
+  refreshInterval: 24h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: gcp-secretstore
+  target:
+    name: cloudflare-api-token-secret
+    namespace: cert-manager
+    creationPolicy: Owner
+  dataFrom:
+  - key: cloudflare
+EOT
+ecoh " - ClusterIssuer"
+cat <<EOT >k apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: cloudflare-clusterissuer
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: privkey-cloudflare-secret
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+    - dns01:
+        cloudflare:
+          email: daniel@hawton.org
+          apiTokenSecretRef:
+            name: cloudflare-api-token-secret
+            key: api-token
+EOT
+
+echo ""
 echo "Done."

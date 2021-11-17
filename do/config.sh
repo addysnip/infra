@@ -9,6 +9,9 @@ projectid="addysnip"
 # ArgoCD main-cluster kubeconfig
 argokubeconfig=$HOME/.config/argocd/kubeconfig.yaml
 
+# Certificate hostnames
+cert_hostnames='["addysnip.com","*.dev.addysnip.com","dev.addysnip.com"]'
+
 function h {
     helm --kubeconfig kubeconfig $*
 }

@@ -16,13 +16,13 @@ echo " - Logging in via CLI"
 argocd login localhost:8181 --username $argocd_username --password "$argocd_password" --insecure
 chkfail $?
 
-echo " - Adding cluster"
-argocd cluster rm do-${region}-${cluster} --kubeconfig kubeconfig
-chkfail $?
+echo " - Removing cluster"
+argocd cluster rm do-${region}-${cluster}
+#chkfail $?
 
 echo " - Closing port forwarding"
 screen -S argocd-cluster -X quit
-chkfail $?
+#chkfail $?
 
 echo ""
 echo "Running teraform destroy"
