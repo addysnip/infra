@@ -1,5 +1,6 @@
 .terraform
 .terraform.lock.hcl
 terraform.tfvars*
+terraform.tfstate*
 kubeconfig
 variables_override.tf

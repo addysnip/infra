@@ -1,28 +1,6 @@
 #!/bin/bash
 
-# provides: argocd_username and argocd_password for the cli operations
-. $HOME/.config/argocd/creds.sh
-
-# GCP Project ID
-projectid="addysnip"
-
-# ArgoCD main-cluster kubeconfig
-argokubeconfig=$HOME/.config/argocd/kubeconfig.yaml
-
-function h {
-    helm --kubeconfig kubeconfig $*
-}
-
-function k {
-    kubectl --kubeconfig kubeconfig $*
-}
-
-function chkfail {
-    if [ $1 -ne 0 ]; then
-        echo "Failed"
-        exit 1
-    fi
-}
+. config.sh
 
 echo "Running the terraform works"
 cd ../terraform/do
@@ -111,7 +89,7 @@ echo "Adding to ArgoCD"
 echo " - Configuring port forwarding"
 screen -S argocd-cluster -d -m bash -c "kubectl --kubeconfig $argokubeconfig port-forward svc/argocd-server -n argocd 8181:443"
 chkfail $?
-sleep 1
+sleep 2
 
 echo " - Logging in via CLI"
 argocd login localhost:8181 --username $argocd_username --password "$argocd_password" --insecure
