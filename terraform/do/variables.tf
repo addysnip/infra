@@ -10,6 +10,12 @@ variable "vpc_name" {
   default     = "k8s-sfo3-vpc"
 }
 
+variable "vpc_range" {
+  type        = string
+  description = "VPC IP range"
+  default     = "192.168.16.0/20"
+}
+
 variable "cluster_name" {
   type        = string
   description = "Cluster name"

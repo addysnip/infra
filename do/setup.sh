@@ -3,6 +3,12 @@
 # provides: argocd_username and argocd_password for the cli operations
 . $HOME/.config/argocd/creds.sh
 
+# GCP Project ID
+projectid="addysnip"
+
+# ArgoCD main-cluster kubeconfig
+argokubeconfig=$HOME/.config/argocd/kubeconfig.yaml
+
 function h {
     helm --kubeconfig kubeconfig $*
 }
@@ -28,6 +34,7 @@ chkfail $?
 cd ../../do
 cluster=$(jq -r '.outputs.k8s_cluster_name.value' ../terraform/do/terraform.tfstate)
 clusterid=$(jq -r '.outputs.k8s_cluster.value' ../terraform/do/terraform.tfstate)
+region=$(jq -r '.outputs.k8s_region.value' ../terraform/do/terraform.tfstate)
 projectid="addysnip"
 serviceaccountjson=$(cat ~/.config/gcloud/.secretmanagerserviceaccount | base64 -w 0)
 
@@ -101,21 +108,17 @@ rm secretstore.yaml
 
 echo ""
 echo "Adding to ArgoCD"
-echo " - Setting lvr context"
-kubectl config use-context lvr
-chkfail $?
-
 echo " - Configuring port forwarding"
-screen -S argocd-cluster -d -m bash -c "kubectl port-forward svc/argocd-server -n argocd 8181:443"
+screen -S argocd-cluster -d -m bash -c "kubectl --kubeconfig $argokubeconfig port-forward svc/argocd-server -n argocd 8181:443"
 chkfail $?
 sleep 1
 
 echo " - Logging in via CLI"
-argocd login --server https://localhost:8181 --username $argocd_username --password "$argocd_password" --insecure
+argocd login localhost:8181 --username $argocd_username --password "$argocd_password" --insecure
 chkfail $?
 
 echo " - Adding cluster"
-argocd cluster add $cluster --kubeconfig kubeconfig
+argocd cluster add do-${region}-${cluster} --kubeconfig kubeconfig
 chkfail $?
 
 echo " - Closing port forwarding"
