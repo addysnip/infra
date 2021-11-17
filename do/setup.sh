@@ -22,6 +22,11 @@ doctl databases firewalls append 92f2d81c-446f-4f0e-8443-97919c2a9a5c --rule k8s
 chkfail $?
 
 echo ""
+echo "1-click installing ingress-nginx from Digital Ocean"
+doctl kubernetes 1-click install $clusterid --1-clicks ingress-nginx
+chkfail $?
+
+echo ""
 echo "Getting kubeconfig"
 doctl kubernetes cluster kubeconfig show $cluster > kubeconfig
 chmod 600 kubeconfig
@@ -135,13 +140,10 @@ spec:
     privateKeySecretRef:
       name: privkey-cloudflare-secret
     solvers:
-    - http01:
-        ingress:
-          class: nginx
     - dns01:
         cloudflare:
           email: daniel@hawton.org
-          apiTokenSecretRef:
+          apiKeySecretRef:
             name: cloudflare-api-token-secret
             key: api-token
 EOT
