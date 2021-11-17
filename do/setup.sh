@@ -101,16 +101,17 @@ chkfail $?
 
 echo " - Closing port forwarding"
 screen -S argocd-cluster -X quit
-chkfail $?
+#chkfail $?
 
 echo ""
 echo "Starting Certificate 'stuff'"
 echo " - Cloudflare API Token Secret"
-cat <<EOT >k apply -f -
+cat <<EOT |k apply -f -
 apiVersion: external-secrets.io/v1alpha1
 kind: ExternalSecret
 metadata:
   name: cloudflare-apit-token
+  namespace: cert-manager
 spec:
   refreshInterval: 24h
   secretStoreRef:
@@ -118,13 +119,12 @@ spec:
     name: gcp-secretstore
   target:
     name: cloudflare-api-token-secret
-    namespace: cert-manager
     creationPolicy: Owner
   dataFrom:
   - key: cloudflare
 EOT
-ecoh " - ClusterIssuer"
-cat <<EOT >k apply -f -
+echo " - ClusterIssuer"
+cat <<EOT |k apply -f -
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
