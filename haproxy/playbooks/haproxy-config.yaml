@@ -1,0 +1,13 @@
+---
+- hosts: haproxy
+  become: yes
+  tasks:
+  - name: Copy haproxy config
+    ansible.builtin.copy:
+      src: haproxy/haproxy.cfg
+      dest: /etc/haproxy/haproxy.cfg
+      owner: root
+      group: root
+      mode: 0644
+  - name: Reload haproxy
+    shell: systemctl reload haproxy

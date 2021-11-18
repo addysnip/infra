@@ -2,7 +2,7 @@ resource "digitalocean_kubernetes_cluster" "k8s_cluster" {
   name          = var.cluster_name
   region        = var.region
   version       = var.k8s_version
-  vpc_uuid      = digitalocean_vpc.vpc.id
+  vpc_uuid      = "9b65d3ea-fcdf-4c86-8100-cd97a156c80c"
   auto_upgrade  = false
   surge_upgrade = true
   tags          = var.tags
@@ -12,24 +12,6 @@ resource "digitalocean_kubernetes_cluster" "k8s_cluster" {
     node_count = var.k8s_nodepool_count
     tags       = var.tags
   }
-}
-
-resource "kubernetes_namespace" "ingress" {
-  metadata {
-    name = "ingress-nginx"
-  }
-
-  depends_on = [digitalocean_kubernetes_cluster.k8s_cluster]
-}
-
-resource "helm_release" "ingress-nginx" {
-  name = "ingress-nginx"
-
-  repository = "https://kubernetes.github.io/ingress-nginx"
-  chart      = "ingress-nginx"
-  namespace  = "ingress-nginx"
-
-  depends_on = [kubernetes_namespace.ingress]
 }
 
 resource "kubernetes_namespace" "cert-manager" {

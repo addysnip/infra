@@ -1,0 +1,23 @@
+---
+- hosts: haproxy
+  become: yes
+  tasks:
+  - name: Install software-properties-common
+    apt:
+      name: software-properties-common
+      state: present
+  - name: Add haproxy repo
+    ansible.builtin.apt_repository:
+      repo: ppa:vbernat/haproxy-2.4
+      update_cache: yes
+  - name: Install haproxy
+    apt:
+      name: haproxy=2.4.*
+      state: present
+  - name: Configure haproxy
+    template:
+      src: haproxy/haproxy.cfg
+      dest: /etc/haproxy/haproxy.cfg
+      owner: root
+      group: root
+      mode: 0644
