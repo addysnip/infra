@@ -89,24 +89,28 @@ chkfail $?
 
 rm secretstore.yaml
 
-echo ""
-echo "Adding to ArgoCD"
-echo " - Configuring port forwarding"
-screen -S argocd-cluster -d -m bash -c "kubectl --kubeconfig $argokubeconfig port-forward svc/argocd-server -n argocd 8181:443"
-chkfail $?
-sleep 2
+do_argocd=0
 
-echo " - Logging in via CLI"
-argocd login localhost:8181 --username $argocd_username --password "$argocd_password" --insecure
-chkfail $?
+if [[ $do_argocd == "1" ]]; then
+	echo ""
+	echo "Adding to ArgoCD"
+	echo " - Configuring port forwarding"
+	screen -S argocd-cluster -d -m bash -c "kubectl --kubeconfig $argokubeconfig port-forward svc/argocd-server -n argocd 8181:443"
+	chkfail $?
+	sleep 2
 
-echo " - Adding cluster"
-argocd cluster add do-${region}-${cluster} --kubeconfig kubeconfig
-chkfail $?
+	echo " - Logging in via CLI"
+	argocd login localhost:8181 --username $argocd_username --password "$argocd_password" --insecure
+	chkfail $?
 
-echo " - Closing port forwarding"
-screen -S argocd-cluster -X quit
-#chkfail $?
+	echo " - Adding cluster"
+	argocd cluster add do-${region}-${cluster} --kubeconfig kubeconfig
+	chkfail $?
+
+	echo " - Closing port forwarding"
+	screen -S argocd-cluster -X quit
+	#chkfail $?
+fi
 
 echo ""
 echo "Starting Certificate 'stuff'"
