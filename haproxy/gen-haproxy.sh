@@ -1,8 +1,10 @@
 #!/bin/bash
 
-clusterid=$1
+prodhaproxy=$1
+if [[ $prodhaproxy == "" ]]; then
+  prodhaproxy=0
+fi
 
-prodfloatingip="157.230.71.179"
 dropletid=$(jq -r '.outputs.id.value' terraform/terraform.tfstate)
 dropletip=$(jq -r '.outputs.ip.value' terraform/terraform.tfstate)
 
@@ -56,7 +58,7 @@ clusters=$(get_clusters)
 echo $clusters
 echo "Parsing cluster list"
 readarray -t dev < <(echo $clusters | jq -r '.dev[]')
-#readarray -t prod < <(echo $clusters | jq -r ".prod")
+readarray -t prod < <(echo $clusters | jq -r ".prod[]")
 
 devips=()
 prodips=()
@@ -66,10 +68,15 @@ for devcluster in "${dev[@]}"; do
   get_loadbalancer_ip $devcluster devips
 done
 
-#echo "Getting production cluster load balancers"
-#for prodcluster in "${prod[@]}"; do
-#  prodips+=($(get_loadbalancer_ip $prodcluster))
-#done
+echo "Getting production cluster load balancers"
+for prodcluster in "${prod[@]}"; do
+  get_loadbalancer_ip $prodcluster prodips
+done
+
+ips=("${devips[@]}")
+if [[ $prodcluster == "1" ]]; then
+  ips=("${prodips[@]}")
+fi
 
 #echo "Updating floating ip $prodfloatingip"
 #reassign $prodfloatingip $dropletid
@@ -108,32 +115,31 @@ EOF
 
 ## Dev cluster
 cat <<EOF >>playbooks/haproxy/haproxy.cfg
-frontend http-dev
+frontend http
     bind ${dropletip}:80
     mode tcp
     option tcplog
-    default_backend http-dev
+    default_backend http-be
 
 frontend https
     bind ${dropletip}:443
     mode tcp
     option tcplog
-    default_backend https-dev
+    default_backend https-be
 
-backend http-dev
+backend http-be
     mode tcp
 EOF
 
-for ip in "${devips[@]}"; do
+for ip in "${ips[@]}"; do
     echo "    server $ip ${ip}:80" >>playbooks/haproxy/haproxy.cfg
 done
 
 cat <<EOF >>playbooks/haproxy/haproxy.cfg
 
-backend https-dev
+backend https-be
     mode tcp
 EOF
-
-for ip in "${devips[@]}"; do
+for ip in "${ips[@]}"; do
     echo "    server $ip ${ip}:80" >>playbooks/haproxy/haproxy.cfg
 done
