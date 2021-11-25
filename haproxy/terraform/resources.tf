@@ -56,6 +56,10 @@ output "ip6" {
   value = digitalocean_droplet.haproxy.ipv6_address
 }
 
+output "id" {
+  value = digitalocean_droplet.haproxy.id
+}
+
 resource "local_file" "inventory" {
   filename = "../inventory.ini"
   content = templatefile("${path.module}/inventory.tpl", {

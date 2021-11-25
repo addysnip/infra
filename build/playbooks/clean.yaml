@@ -1,0 +1,6 @@
+---
+- hosts: build
+  become: yes
+  tasks:
+  - name: Clean images
+    shell: ctr i rm $(ctr i ls -q)

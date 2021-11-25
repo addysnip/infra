@@ -2,6 +2,10 @@
 
 clusterid=$1
 
+prodfloatingip="157.230.71.179"
+dropletid=$(jq -r '.outputs.id.value' terraform/terraform.tfstate)
+dropletip=$(jq -r '.outputs.ip.value' terraform/terraform.tfstate)
+
 if [ -z $clusterid ]; then
   clusterid="addysnip-tor1-prod"
 fi
@@ -9,26 +13,66 @@ fi
 function chkfail() {
   if [ $? -ne 0 ]; then
     echo "Failed"
-    exit 1
+    if [ $1 -ne 0 ]; then
+      exit $1
+    fi
   fi
 }
 
-echo "Checking for $clusterid"
-echo "Getting load balancer id"
-loadbalancerid=$(doctl kubernetes cluster list-associated-resources $clusterid -o json | jq -r '.load_balancers[0].id')
-chkfail $?
-if [ -z $loadbalancerid ] || [ $loadbalancerid == 'null' ]; then
-  echo "No load balancer found"
-  exit 1
-fi
+function _unassign() {
+  doctl compute floating-ip-action unassign $1
+}
 
-echo "Getting load balancer ip"
-loadbalancer=$(doctl compute load-balancer get $loadbalancerid -o json | jq -r '.[0].ip')
-chkfail $?
-if [ -z $loadbalancer ] || [ $loadbalancer == 'null' ]; then
-  echo "No load balancer ip found"
-  exit 1
-fi
+function _assign() {
+  doctl compute floating-ip-action assign $1 $2
+  if [ $? != 0 ]; then
+    echo " ++ Exit code $?, waiting and trying again..."
+    sleep 10
+    _assign $1 $2
+  fi
+}
+
+function reassign() {
+  echo " - Unassigning"
+  _unassign $1
+  echo " - Assigning"
+  _assign $1 $2
+}
+
+function get_clusters() {
+  echo $(python3 tools/get-clusters.py)
+}
+
+function get_loadbalancer_ip() {
+  clusterid=$1
+  local -n a=$2
+  lb=$(doctl kubernetes cluster list-associated-resources $clusterid -o json | jq -r '.load_balancers[0].id')
+  i=$(doctl compute load-balancer get $lb -o json | jq -r '.[0].ip')
+  a+=($i)
+}
+
+echo "Getting cluster list"
+clusters=$(get_clusters)
+echo $clusters
+echo "Parsing cluster list"
+readarray -t dev < <(echo $clusters | jq -r '.dev[]')
+#readarray -t prod < <(echo $clusters | jq -r ".prod")
+
+devips=()
+prodips=()
+
+echo "Getting development cluster load balancers"
+for devcluster in "${dev[@]}"; do
+  get_loadbalancer_ip $devcluster devips
+done
+
+#echo "Getting production cluster load balancers"
+#for prodcluster in "${prod[@]}"; do
+#  prodips+=($(get_loadbalancer_ip $prodcluster))
+#done
+
+#echo "Updating floating ip $prodfloatingip"
+#reassign $prodfloatingip $dropletid
 
 echo ""
 echo "Generating haproxy config"
@@ -54,26 +98,42 @@ global
 
 defaults
     log     global
-    mode    http
-    option  httplog
+    mode    tcp
+    option  tcplog
     option  dontlognull
     timeout connect 5s
     timeout client  50000
     timeout server  50000
+EOF
 
-frontend http
-    bind :80
+## Dev cluster
+cat <<EOF >>playbooks/haproxy/haproxy.cfg
+frontend http-dev
+    bind ${dropletip}:80
     mode tcp
-    default_backend http
+    option tcplog
+    default_backend http-dev
 
 frontend https
-    bind :443
+    bind ${dropletip}:443
     mode tcp
-    default_backend https
+    option tcplog
+    default_backend https-dev
 
-backend http
-    server $loadbalancerid ${loadbalancer}:80
-
-backend https
-    server $loadbalancerid ${loadbalancer}:443
+backend http-dev
+    mode tcp
 EOF
+
+for ip in "${devips[@]}"; do
+    echo "    server $ip ${ip}:80" >>playbooks/haproxy/haproxy.cfg
+done
+
+cat <<EOF >>playbooks/haproxy/haproxy.cfg
+
+backend https-dev
+    mode tcp
+EOF
+
+for ip in "${devips[@]}"; do
+    echo "    server $ip ${ip}:80" >>playbooks/haproxy/haproxy.cfg
+done
