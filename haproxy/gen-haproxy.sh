@@ -74,7 +74,7 @@ for prodcluster in "${prod[@]}"; do
 done
 
 ips=("${devips[@]}")
-if [[ $prodcluster == "1" ]]; then
+if [[ $prodhaproxy == "1" ]]; then
   ips=("${prodips[@]}")
 fi
 
