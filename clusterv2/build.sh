@@ -274,4 +274,35 @@ k apply -f $manifestUrl
 cp kubeconfig ~/.kube/config-files/$name-$region-$env.yaml
 echo "$name-$region-$env" >> .name
 
+echo "Waiting for redirector service to reconfigure ingress-nginx's default backend"
+set +e
+while true; do
+    k get svc -n redirector | grep redirector &>/dev/null
+    if [[ $? -eq 0 ]]; then
+        echo "Redirector service is configured"
+        break
+    fi
+    sleep 5
+done
+set -e
+echo "Reconfiguring ingress-nginx"
+cat <<EOF >/tmp/ingress-nginx.yaml
+controller:
+  service:
+    type: LoadBalancer
+    externalTrafficPolicy: Local
+    annotations:
+      service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol: "false"
+  config:
+    use-proxy-protocol: "false"
+  admissionWebhooks:
+    timeoutSeconds: 29
+  kind: DaemonSet
+  extraArgs:
+    default-backend-service: "redirector/redirector"
+    default-ssl-certificate: "redirector/addysnip-com-ssl"
+EOF
+
+h upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace --values /tmp/ingress-nginx.yaml
+
 echo "- Cluster should be ready shortly"

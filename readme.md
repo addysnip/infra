@@ -1,8 +1,7 @@
-This script sets up a new cluster, adds that cluster to the DBaaS firewall rules to access the DB cluster, 
-installs chart-manager and ingress-nginx, and then adds the cluster to my existing ArgoCD install.
+# Provision new cluster
 
-edit terraform/do/variables_override.tf (copy .example)
-run cd do && bash setup.sh
-
-To cleanup:
-cd do && bash teardown.sh
+1. cd clusterv2 && bash build.sh <name> <region> <k8s version/latest> <env>
+2. reconfigure HAProxy repo:edge-provisioner: bash reconfigure.sh <env>
+3. Check to make sure environment is working as expected
+4. Bring down old environment: cd data/<name>; bash destroy.sh
+5. Repeat step 2 to remove old cluster from HAProxy config
