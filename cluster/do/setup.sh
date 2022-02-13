@@ -2,6 +2,13 @@
 
 . config.sh
 
+function get_loadbalancer_ip() {
+  clusterid=$1
+  lb=$(doctl kubernetes cluster list-associated-resources $clusterid -o json | jq -r '.load_balancers[0].id')
+  i=$(doctl compute load-balancer get $lb -o json | jq -r '.[0].ip')
+  echo $i
+}
+
 echo "Running the terraform works"
 cd ../terraform/do
 terraform init
@@ -132,7 +139,7 @@ spec:
   dataFrom:
   - key: cloudflare
 EOT
-echo " - ClusterIssuer"
+echo " - ClusterIssuer (dns01)"
 cat <<EOT |k apply -f -
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -151,6 +158,47 @@ spec:
             name: cloudflare-api-token-secret
             key: api-token
 EOT
+echo " - ClusterIssuer (http01)"
+cat <<EOT |k apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: addysnip-http01-issuer
+spec:
+  acme:
+    privateKeySecretRef:
+      name: issuer-private-key
+    server: https://acme-v02.api.letsencrypt.org/directory
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOT
+
+echo "- Install Redis cluster"
+echo "  - Getting current Redis Password"
+secret=redis
+redis_versions=($(gcloud secrets versions list $secret |grep -v 'NAME' | awk '{ print $1 }'))
+redis_password=$(gcloud secrets versions access ${redis_versions[0]} --secret $secret | jq -r '.REDIS_PASSWORD')
+
+echo "  - Adding and updating Bitnami repo"
+h repo add bitnami https://charts.bitnami.com/bitnami
+h repo update
+
+echo "  - Install"
+k create ns redis
+h install redis bitnami/redis --namespace redis --set auth.password=$redis_password --set sentinel.enabled=true --set sentinel.masterSet=master --set auth.sentinel=false
+
+echo "Annotating ingress-nginx service"
+echo "- Looking up load balancer IP"
+lbip=$(get_loadbalancer_ip $clusterid)
+echo "- Creating DNS entry"
+lbhost=$(echo -n $lbip | od -A n -t x1 | sed 's/ //g')
+doctl compute domain records create inf.addysnip.com --record-name $lbhost --record-type A --record-data $lbip --record-ttl 120
+echo "- Adding annotations"
+k annotate service ingress-nginx-controller -n ingress-nginx --overwrite service.beta.kubernetes.io/do-loadbalancer-hostname="${lbhost}.addysnip.com"
+k annotate service ingress-nginx-controller -n ingress-nginx --overwrite service.beta.kubernetes.io/do-loadbalancer-name="${lbhost}.addysnip.com"
+k annotate service ingress-nginx-controller -n ingress-nginx --overwrite service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol="false"
 
 echo ""
 echo "Done."

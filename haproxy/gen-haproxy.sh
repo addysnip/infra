@@ -119,6 +119,7 @@ frontend http
     bind ${dropletip}:80
     mode tcp
     option tcplog
+    option forwardfor
     default_backend http-be
 
 frontend https
@@ -141,5 +142,5 @@ backend https-be
     mode tcp
 EOF
 for ip in "${ips[@]}"; do
-    echo "    server $ip ${ip}:80" >>playbooks/haproxy/haproxy.cfg
+    echo "    server $ip ${ip}:443" >>playbooks/haproxy/haproxy.cfg
 done

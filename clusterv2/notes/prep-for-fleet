@@ -1,0 +1,3 @@
+# This will get the cluster labelled
+
+k patch cluster.fleet.cattle.io -n fleet-default c-xdb8r --patch '{"metadata":{"labels":{"env":"test"}}}' --type=merge

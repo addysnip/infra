@@ -1,0 +1,35 @@
+variable "region" {
+    default = "sfo3"
+}
+
+variable "vpc_name" {
+    default = "k8s-sfo3-vpc"
+}
+
+variable "cluster_name" {
+    default = "addysnip-sfo3-1"
+}
+
+variable "db_name" {
+    default = "addysnip"
+}
+
+variable "db_username" {
+    default = "addysnip"
+}
+
+variable "k8s_version" {
+    default = "1.21.5-do.0"
+}
+
+variable "tags" {
+    default = ["addysnip"]
+}
+
+variable "k8s_nodepool_size" {
+    default = "s-2vcpu-4gb"
+}
+
+variable "k8s_nodepool_count" {
+    default = 1
+}

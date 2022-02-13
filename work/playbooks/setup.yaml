@@ -1,0 +1,59 @@
+---
+- hosts: build
+  remote_user: root
+#  become: yes
+  vars_files:
+  - ../vars/k3s.yaml
+  tasks:
+  - name: Update hostname
+    shell: hostnamectl set-hostname {{ inventory_hostname }}
+  - name: Install curl and jq
+    ansible.builtin.apt:
+      name:
+      - curl
+      - jq
+      state: present
+  - name: Create my group
+    ansible.builtin.group:
+      name: daniel
+      state: present
+  - name: Create my user
+    ansible.builtin.user:
+      name: daniel
+      group: daniel
+      groups: sudo
+      shell: /bin/bash
+  - name: Add SSH keys
+    ansible.builtin.script: ../scripts/github.sh daniel dhawton
+  - name: Update sudoers
+    lineinfile:
+      path: /etc/sudoers
+      state: present
+      regexp: '%sudo\s+ALL='
+      line: '%sudo ALL=(ALL:ALL) NOPASSWD: ALL'
+      validate: '/usr/sbin/visudo -cf %s'
+  - name: Upgrade
+    apt:
+      update_cache: yes
+      upgrade: dist
+  - name: Check if reboot required
+    stat:
+      path: /var/run/reboot-required
+    register: reboot_required_file
+  - name: Reboot if required
+    reboot:
+    when: reboot_required_file.stat.exists == true
+  - name: Disable root login in sshd
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: 'PermitRootLogin yes'
+      line: 'PermitRootLogin no'
+  - name: Disable SSH password authentication
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: 'PasswordAuthentication'
+      line: 'PasswordAuthentication no'
+  - name: Restart SSHd
+    ansible.builtin.systemd:
+      name: sshd
+      state: restarted

@@ -1,0 +1,164 @@
+apiVersion: provisioning.cattle.io/v1
+kind: Cluster
+metadata:
+  name: test
+  annotations:
+    {}
+#    key: string
+  labels:
+    {}
+#    key: string
+  namespace: fleet-default
+spec:
+#  agentEnvVars:
+#    - name: string
+#      value: string
+#  cloudCredentialSecretName: string
+#  clusterAPIConfig:
+#    clusterName: string
+#  defaultClusterRoleForProjectMembers: string
+#  defaultPodSecurityPolicyTemplateName: string
+#  enableNetworkPolicy: boolean
+#  kubernetesVersion: string
+#  localClusterAuthEndpoint:
+#    caCerts: string
+#    enabled: boolean
+#    fqdn: string
+#  redeploySystemAgentGeneration: int
+#  rkeConfig:
+#    additionalManifest: string
+#    chartValues:
+#      
+#    etcd:
+#      disableSnapshots: boolean
+#      s3:
+#        bucket: string
+#        cloudCredentialName: string
+#        endpoint: string
+#        endpointCA: string
+#        folder: string
+#        region: string
+#        skipSSLVerify: boolean
+#      snapshotRetention: int
+#      snapshotScheduleCron: string
+#    etcdSnapshotCreate:
+#      generation: int
+#      name: string
+#      nodeName: string
+#      s3:
+#        bucket: string
+#        cloudCredentialName: string
+#        endpoint: string
+#        endpointCA: string
+#        folder: string
+#        region: string
+#        skipSSLVerify: boolean
+#    etcdSnapshotRestore:
+#      createdAt: string
+#      generation: int
+#      name: string
+#      nodeName: string
+#      s3:
+#        bucket: string
+#        cloudCredentialName: string
+#        endpoint: string
+#        endpointCA: string
+#        folder: string
+#        region: string
+#        skipSSLVerify: boolean
+#      size: int
+#    infrastructureRef:
+#      apiVersion: string
+#      fieldPath: string
+#      kind: string
+#      name: string
+#      namespace: string
+#      resourceVersion: string
+#      uid: string
+#    machineGlobalConfig:
+#      
+#    machinePools:
+#      - cloudCredentialSecretName: string
+#        controlPlaneRole: boolean
+#        displayName: string
+#        etcdRole: boolean
+#        labels:
+#          key: string
+#        machineConfigRef:
+#          apiVersion: string
+#          fieldPath: string
+#          kind: string
+#          name: string
+#          namespace: string
+#          resourceVersion: string
+#          uid: string
+#        machineDeploymentAnnotations:
+#          key: string
+#        machineDeploymentLabels:
+#          key: string
+#        name: string
+#        paused: boolean
+#        quantity: int
+#        rollingUpdate:
+#          maxSurge: string
+#          maxUnavailable: string
+#        taints:
+#          - effect: string
+#            key: string
+#            timeAdded: string
+#            value: string
+#        workerRole: boolean
+#    machineSelectorConfig:
+#      - config:
+#          
+#        machineLabelSelector:
+#          matchExpressions:
+#            - key: string
+#              operator: string
+#              values:
+#                - string
+#          matchLabels:
+#            key: string
+#    provisionGeneration: int
+#    registries:
+#      configs:
+#        authConfigSecretName: string
+#          caBundle: string
+#          insecureSkipVerify: boolean
+#          tlsSecretName: string
+#      mirrors:
+#        endpoint:
+#            - string
+#          rewrite:
+#            key: string
+#    upgradeStrategy:
+#      controlPlaneConcurrency: string
+#      controlPlaneDrainOptions:
+#        deleteEmptyDirData: boolean
+#        disableEviction: boolean
+#        enabled: boolean
+#        force: boolean
+#        gracePeriod: int
+#        ignoreDaemonSets: boolean
+#        ignoreErrors: boolean
+#        postDrainHooks:
+#          - annotation: string
+#        preDrainHooks:
+#          - annotation: string
+#        skipWaitForDeleteTimeoutSeconds: int
+#        timeout: int
+#      workerConcurrency: string
+#      workerDrainOptions:
+#        deleteEmptyDirData: boolean
+#        disableEviction: boolean
+#        enabled: boolean
+#        force: boolean
+#        gracePeriod: int
+#        ignoreDaemonSets: boolean
+#        ignoreErrors: boolean
+#        postDrainHooks:
+#          - annotation: string
+#        preDrainHooks:
+#          - annotation: string
+#        skipWaitForDeleteTimeoutSeconds: int
+#        timeout: int

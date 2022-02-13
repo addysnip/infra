@@ -1,0 +1,11 @@
+---
+- hosts: build
+  become: yes
+  tasks:
+  - name: Update sudoers
+    lineinfile:
+      path: /etc/sudoers
+      state: present
+      regexp: '%sudo\s+ALL='
+      line: '%sudo ALL=(ALL:ALL) NOPASSWD: ALL'
+      validate: '/usr/sbin/visudo -cf %s'

@@ -1,0 +1,8 @@
+---
+- hosts: haproxy
+  become: yes
+  tasks:
+  - name: Install certbot
+    apt:
+      name: certbot
+      state: present
