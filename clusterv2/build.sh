@@ -305,4 +305,8 @@ EOF
 
 h upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace --values /tmp/ingress-nginx.yaml
 
-echo "- Cluster should be ready shortly"
+echo "Waiting for ingress-nginx to be ready"
+
+k rollout status ds/ingress-nginx-controller -n ingress-nginx
+
+echo "- Done and done... now go reconfigure haproxy!"
